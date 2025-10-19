@@ -1,20 +1,21 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Copy, ArrowLeft } from "lucide-react"
+import { Copy, LogOut } from "lucide-react"
 import Link from "next/link"
 import ChatMessage from "./chat-message"
 import ChatInput from "./chat-input"
+import socket from "../utils/socket"
+import { Message } from "../utils/types"
 
-interface Message {
-  id: string
-  text: string
-  timestamp: Date
-  isOwn: boolean
+interface ChatRoomProps {
+  roomId: string
+  username: string
 }
 
-export default function ChatRoom({ roomId }: { roomId: string }) {
+export default function ChatRoom({ roomId, username }: ChatRoomProps) {
   const [messages, setMessages] = useState<Message[]>([])
+  const [users, setUsers] = useState<string[]>([username])
   const [copied, setCopied] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -22,21 +23,83 @@ export default function ChatRoom({ roomId }: { roomId: string }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
+  // Join room and listen to Socket.IO events
+  useEffect(() => {
+    socket.emit("join_room", { roomId, username }, (response: any) => {
+      if (response.success) {
+        setMessages(
+          response.messages.map((msg: any) => ({
+            id: msg.id.toString(),
+            text: msg.message,
+            username: msg.username,
+            timestamp: msg.timestamp,
+            isOwn: msg.userId === socket.id,
+            userId: msg.userId,
+          }))
+        )
+      } else {
+        alert(response.error || "Failed to join room")
+      }
+    })
+
+    socket.on("new_message", (msg: any) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: msg.id.toString(),
+          text: msg.message,
+          username: msg.username,
+          timestamp: msg.timestamp,
+          isOwn: msg.userId === socket.id,
+          userId: msg.userId,
+        },
+      ])
+    })
+
+    socket.on("user_joined", (data: { message: string; username: string; userId?: string }) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: data.message,
+          username: "System",
+          timestamp: new Date().toISOString(),
+          isOwn: false,
+          userId: data.userId || "",
+        },
+      ])
+      setUsers((prev) => [...prev, data.username])
+    })
+
+    socket.on("user_left", (data: { message: string; username: string; userId?: string }) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: data.message,
+          username: "System",
+          timestamp: new Date().toISOString(),
+          isOwn: false,
+          userId: data.userId || "",
+        },
+      ])
+      setUsers((prev) => prev.filter((u) => u !== data.username))
+    })
+
+    return () => {
+      socket.off("new_message")
+      socket.off("user_joined")
+      socket.off("user_left")
+    }
+  }, [roomId, username])
+
   useEffect(() => {
     scrollToBottom()
   }, [messages])
 
   const handleSendMessage = (text: string) => {
     if (!text.trim()) return
-
-    const newMessage: Message = {
-      id: Math.random().toString(36).substr(2, 9),
-      text,
-      timestamp: new Date(),
-      isOwn: true,
-    }
-
-    setMessages((prev) => [...prev, newMessage])
+    socket.emit("send_message", { roomId, message: text, username })
   }
 
   const handleCopyRoomId = () => {
@@ -47,62 +110,87 @@ export default function ChatRoom({ roomId }: { roomId: string }) {
 
   return (
     <div className="flex h-dvh flex-col items-center justify-center bg-background p-4">
-      <div className="w-full max-w-4xl rounded-xl border border-[color:var(--color-brand)]/30 bg-background/50 shadow-lg shadow-[color:var(--color-brand)]/10 backdrop-blur-sm flex flex-col h-dvh md:h-[90vh]">
+      <div className="w-full max-w-6xl rounded-xl border border-[color:var(--color-brand)]/30 bg-background/50 shadow-lg shadow-[color:var(--color-brand)]/10 backdrop-blur-sm flex flex-col h-dvh md:h-[90vh]">
         {/* Header */}
         <header className="border-b border-[color:var(--color-brand)]/10 bg-background/80 backdrop-blur-sm rounded-t-xl">
           <div className="flex w-full items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/"
-                className="inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-muted"
-                aria-label="Back to home"
-              >
-                <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-              </Link>
-              <div>
-                <p className="text-xs text-muted-foreground">Room ID</p>
-                <p className="font-mono text-sm text-foreground">{roomId}</p>
-              </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Room ID</p>
+              <p className="font-mono text-sm text-foreground">{roomId}</p>
             </div>
-
-            <button
-              onClick={handleCopyRoomId}
-              className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--color-brand)]/20 bg-[color:var(--color-brand)]/5 px-3 py-2 text-xs transition-all hover:border-[color:var(--color-brand)]/40 hover:bg-[color:var(--color-brand)]/10"
-              aria-label="Copy room ID"
-            >
-              <Copy className="h-4 w-4" />
-              <span>{copied ? "Copied!" : "Copy"}</span>
-            </button>
           </div>
         </header>
 
-        {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="w-full px-6 py-6">
-            {messages.length === 0 ? (
-              <div className="flex h-full items-center justify-center">
-                <div className="text-center">
-                  <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-lg border border-[color:var(--color-brand)]/20 bg-[color:var(--color-brand)]/5">
-                    <span className="text-lg">🔐</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">No messages yet. Start the conversation.</p>
+        {/* Main Content */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar */}
+          <aside className="w-48 border-r border-[color:var(--color-brand)]/10 bg-background/40 backdrop-blur-sm overflow-y-auto hidden md:flex flex-col">
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-4 border-b border-[color:var(--color-brand)]/10">
+                <p className="text-xs text-muted-foreground mb-2">Your Username</p>
+                <p className="font-mono text-sm text-[color:var(--color-brand)] truncate">{username}</p>
+              </div>
+              <div className="p-4">
+                <p className="text-xs text-muted-foreground mb-3">Users in Room</p>
+                <div className="space-y-2">
+                  {users.map((user) => (
+                    <div key={user} className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-[color:var(--color-brand)]" />
+                      <span className="text-xs text-foreground truncate">{user}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <ChatMessage key={message.id} message={message} />
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Input Area */}
-        <div className="border-t border-[color:var(--color-brand)]/10 bg-background/80 backdrop-blur-sm rounded-b-xl">
-          <div className="w-full px-6 py-4">
-            <ChatInput onSendMessage={handleSendMessage} />
+            <div className="border-t border-[color:var(--color-brand)]/10 p-4 space-y-2">
+              <button
+                onClick={handleCopyRoomId}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-[color:var(--color-brand)]/20 bg-[color:var(--color-brand)]/5 px-3 py-2 text-xs transition-all hover:border-[color:var(--color-brand)]/40 hover:bg-[color:var(--color-brand)]/10"
+              >
+                <Copy className="h-4 w-4" />
+                <span>{copied ? "Copied!" : "Copy ID"}</span>
+              </button>
+
+              <Link
+                href="/"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-2 text-xs font-medium text-red-400 transition-all hover:border-red-500/60 hover:bg-red-500/10 hover:shadow-lg hover:shadow-red-500/20"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Exit</span>
+              </Link>
+            </div>
+          </aside>
+
+          {/* Messages */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto">
+              <div className="w-full px-6 py-6">
+                {messages.length === 0 ? (
+                  <div className="flex h-full items-center justify-center">
+                    <div className="text-center">
+                      <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-lg border border-[color:var(--color-brand)]/20 bg-[color:var(--color-brand)]/5">
+                        <span className="text-lg">🔐</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">No messages yet. Start the conversation.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {messages.map((msg) => (
+                      <ChatMessage key={msg.id} message={msg} />
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="border-t border-[color:var(--color-brand)]/10 bg-background/80 backdrop-blur-sm">
+              <div className="w-full px-6 py-4">
+                <ChatInput onSendMessage={handleSendMessage} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
