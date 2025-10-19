@@ -7,9 +7,8 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "CipherChat — Secure, Encrypted Chat",
+  title: "AegisChat — Secure, Encrypted Chat",
   description: "Create or join private, end-to-end encrypted chat rooms.",
-  generator: "v0.app",
 }
 
 export default function RootLayout({
