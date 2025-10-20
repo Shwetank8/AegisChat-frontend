@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Copy, LogOut } from "lucide-react"
+import { Copy, LogOut, Menu, X } from "lucide-react"
 import Link from "next/link"
 import ChatMessage from "./chat-message"
 import ChatInput from "./chat-input"
@@ -15,18 +15,18 @@ interface ChatRoomProps {
 
 export default function ChatRoom({ roomId, username }: ChatRoomProps) {
   const [messages, setMessages] = useState<Message[]>([])
-  const [users, setUsers] = useState<Array<{ id: string; username: string }>>([{ 
-    id: `${username}-${Date.now()}`, 
-    username: username 
-  }])
+  const [users, setUsers] = useState<Array<{ id: string; username: string }>>([
+    { id: `${username}-${Date.now()}`, username },
+  ])
   const [copied, setCopied] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  // Join room and listen to Socket.IO events
+  // Join room & listen for events
   useEffect(() => {
     socket.emit("join_room", { roomId, username }, (response: any) => {
       if (response.success) {
@@ -40,9 +40,7 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
             userId: msg.userId,
           }))
         )
-      } else {
-        alert(response.error || "Failed to join room")
-      }
+      } else alert(response.error || "Failed to join room")
     })
 
     socket.on("new_message", (msg: any) => {
@@ -59,7 +57,7 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
       ])
     })
 
-    socket.on("user_joined", (data: { message: string; username: string; userId?: string }) => {
+    socket.on("user_joined", (data) => {
       setMessages((prev) => [
         ...prev,
         {
@@ -73,15 +71,13 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
       ])
       setUsers((prev) => {
         const newUserId = `${data.username}-${data.userId || Date.now()}`
-        // Check if user already exists
-        if (!prev.some(u => u.id === newUserId)) {
+        if (!prev.some((u) => u.id === newUserId))
           return [...prev, { id: newUserId, username: data.username }]
-        }
         return prev
       })
     })
 
-    socket.on("user_left", (data: { message: string; username: string; userId?: string }) => {
+    socket.on("user_left", (data) => {
       setMessages((prev) => [
         ...prev,
         {
@@ -93,7 +89,9 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
           userId: data.userId || "",
         },
       ])
-      setUsers((prev) => prev.filter((u) => u.id !== `${data.username}-${data.userId || ''}`))
+      setUsers((prev) =>
+        prev.filter((u) => u.id !== `${data.username}-${data.userId || ""}`)
+      )
     })
 
     return () => {
@@ -103,9 +101,7 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
     }
   }, [roomId, username])
 
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+  useEffect(scrollToBottom, [messages])
 
   const handleSendMessage = (text: string) => {
     if (!text.trim()) return
@@ -119,22 +115,30 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
   }
 
   return (
-    <div className="flex h-dvh flex-col items-center justify-center bg-background p-4">
-      <div className="w-full max-w-6xl rounded-xl border border-[color:var(--color-brand)]/30 bg-background/50 shadow-lg shadow-[color:var(--color-brand)]/10 backdrop-blur-sm flex flex-col h-dvh md:h-[90vh]">
+    <div className="flex h-dvh flex-col items-center justify-center bg-background p-2 sm:p-4">
+      <div className="relative w-full max-w-6xl rounded-xl border border-[color:var(--color-brand)]/30 bg-background/50 shadow-lg shadow-[color:var(--color-brand)]/10 backdrop-blur-sm flex flex-col h-dvh md:h-[90vh]">
+        
         {/* Header */}
-        <header className="border-b border-[color:var(--color-brand)]/10 bg-background/80 backdrop-blur-sm rounded-t-xl">
-          <div className="flex w-full items-center justify-between px-6 py-4">
-            <div>
-              <p className="text-xs text-muted-foreground">Room ID</p>
-              <p className="font-mono text-sm text-foreground">{roomId}</p>
-            </div>
+        <header className="border-b border-[color:var(--color-brand)]/10 bg-background/80 backdrop-blur-sm rounded-t-xl px-4 sm:px-6 py-3 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Room ID</p>
+            <p className="font-mono text-xs sm:text-sm text-foreground break-all">{roomId}</p>
           </div>
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="md:hidden p-2 rounded-lg border border-[color:var(--color-brand)]/20 hover:bg-[color:var(--color-brand)]/10 transition"
+          >
+            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </header>
 
-        {/* Main Content */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
-          <aside className="w-48 border-r border-[color:var(--color-brand)]/10 bg-background/40 backdrop-blur-sm overflow-y-auto hidden md:flex flex-col">
+        <div className="flex flex-1 overflow-hidden relative">
+          {/* Sidebar (mobile overlay + desktop static) */}
+          <aside
+            className={`absolute md:static z-20 w-64 md:w-48 bg-background/95 backdrop-blur-sm border-r border-[color:var(--color-brand)]/10 transform transition-transform duration-300 ${
+              sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+            } flex flex-col`}
+          >
             <div className="flex-1 overflow-y-auto">
               <div className="p-4 border-b border-[color:var(--color-brand)]/10">
                 <p className="text-xs text-muted-foreground mb-2">Your Username</p>
@@ -164,7 +168,7 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
 
               <Link
                 href="/"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-2 text-xs font-medium text-red-400 transition-all hover:border-red-500/60 hover:bg-red-500/10 hover:shadow-lg hover:shadow-red-500/20"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-2 text-xs font-medium text-red-400 transition-all hover:border-red-500/60 hover:bg-red-500/10"
               >
                 <LogOut className="h-4 w-4" />
                 <span>Exit</span>
@@ -172,34 +176,32 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
             </div>
           </aside>
 
-          {/* Messages */}
+          {/* Chat Section */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto">
-              <div className="w-full px-6 py-6">
-                {messages.length === 0 ? (
-                  <div className="flex h-full items-center justify-center">
-                    <div className="text-center">
-                      <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-lg border border-[color:var(--color-brand)]/20 bg-[color:var(--color-brand)]/5">
-                        <span className="text-lg">🔐</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">No messages yet. Start the conversation.</p>
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6">
+              {messages.length === 0 ? (
+                <div className="flex h-full items-center justify-center">
+                  <div className="text-center">
+                    <div className="mb-3 inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg border border-[color:var(--color-brand)]/20 bg-[color:var(--color-brand)]/5">
+                      <span className="text-lg">🔐</span>
                     </div>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      No messages yet. Start the conversation.
+                    </p>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {messages.map((msg) => (
-                      <ChatMessage key={msg.id} message={msg} />
-                    ))}
-                    <div ref={messagesEndRef} />
-                  </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="space-y-3 sm:space-y-4">
+                  {messages.map((msg) => (
+                    <ChatMessage key={msg.id} message={msg} />
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
             </div>
 
-            <div className="border-t border-[color:var(--color-brand)]/10 bg-background/80 backdrop-blur-sm">
-              <div className="w-full px-6 py-4">
-                <ChatInput onSendMessage={handleSendMessage} />
-              </div>
+            <div className="border-t border-[color:var(--color-brand)]/10 bg-background/80 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4">
+              <ChatInput onSendMessage={handleSendMessage} />
             </div>
           </div>
         </div>
