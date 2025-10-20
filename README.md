@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🔐 AegisChat — Frontend
 
-## Getting Started
+AegisChat is a **real-time, end-to-end encrypted chat application** built with **Next.js 14**, **Socket.IO**, and **Tailwind CSS**.  
+It features dynamic chat rooms, instant messaging, and a responsive UI that adapts seamlessly across all devices.
 
-First, run the development server:
+---
 
+## 🚀 Tech Stack
+
+- **Next.js 14 (App Router)**
+- **React 18**
+- **Socket.IO Client**
+- **Tailwind CSS**
+- **TypeScript**
+- **Lucide Icons**
+- **Framer Motion (for subtle animations)**
+
+---
+
+## Features
+
+- 💬 Real-time chat powered by Socket.IO
+- ⚡ Smooth, responsive UI for mobile & desktop
+- 🧠 Persistent room sessions
+- 📋 Copyable Room ID*
+- 🎨 Elegant UI with Tailwind and Lucide icons
+- 🔄 Automatic scroll to latest message
+
+---
+
+## 📸 Preview
+<img width="1739" height="829" alt="image" src="https://github.com/user-attachments/assets/e8e5df23-df75-46fb-bf6b-638bb7a403ae" />
+
+
+
+<img width="1498" height="814" alt="image" src="https://github.com/user-attachments/assets/a446d1ff-30eb-4a7a-8665-fdf53120f1bd" />
+
+---
+
+
+  
+## 📦 Installation & Setup
+
+### 1️⃣ Clone the Repository
 ```bash
-npm run dev
+git clone https://github.com/yourusername/aegischat-frontend.git
+cd aegischat-frontend
+
+npm install
 # or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+yarn install
