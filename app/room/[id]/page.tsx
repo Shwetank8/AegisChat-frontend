@@ -1,19 +1,17 @@
 "use client"
 
-import { useSearchParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import ChatRoom from "../../../components/chat-room"
 
-interface RoomPageProps {
-  params: { id: string }
-}
-
-export default function RoomPage({ params }: RoomPageProps) {
+export default function RoomPage() {
+  const params = useParams()
   const searchParams = useSearchParams()
   const username = searchParams.get("username") || "Anonymous"
+  const roomId = params?.id as string
 
   return (
     <main className="relative min-h-dvh overflow-hidden bg-background">
-      <ChatRoom roomId={params.id} username={username} />
+      <ChatRoom roomId={roomId} username={username} />
     </main>
   )
 }

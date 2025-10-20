@@ -15,7 +15,10 @@ interface ChatRoomProps {
 
 export default function ChatRoom({ roomId, username }: ChatRoomProps) {
   const [messages, setMessages] = useState<Message[]>([])
-  const [users, setUsers] = useState<string[]>([username])
+  const [users, setUsers] = useState<Array<{ id: string; username: string }>>([{ 
+    id: `${username}-${Date.now()}`, 
+    username: username 
+  }])
   const [copied, setCopied] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -68,7 +71,14 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
           userId: data.userId || "",
         },
       ])
-      setUsers((prev) => [...prev, data.username])
+      setUsers((prev) => {
+        const newUserId = `${data.username}-${data.userId || Date.now()}`
+        // Check if user already exists
+        if (!prev.some(u => u.id === newUserId)) {
+          return [...prev, { id: newUserId, username: data.username }]
+        }
+        return prev
+      })
     })
 
     socket.on("user_left", (data: { message: string; username: string; userId?: string }) => {
@@ -83,7 +93,7 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
           userId: data.userId || "",
         },
       ])
-      setUsers((prev) => prev.filter((u) => u !== data.username))
+      setUsers((prev) => prev.filter((u) => u.id !== `${data.username}-${data.userId || ''}`))
     })
 
     return () => {
@@ -134,9 +144,9 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
                 <p className="text-xs text-muted-foreground mb-3">Users in Room</p>
                 <div className="space-y-2">
                   {users.map((user) => (
-                    <div key={user} className="flex items-center gap-2">
+                    <div key={user.id} className="flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full bg-[color:var(--color-brand)]" />
-                      <span className="text-xs text-foreground truncate">{user}</span>
+                      <span className="text-xs text-foreground truncate">{user.username}</span>
                     </div>
                   ))}
                 </div>
