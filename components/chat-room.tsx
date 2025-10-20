@@ -7,6 +7,7 @@ import ChatMessage from "./chat-message"
 import ChatInput from "./chat-input"
 import socket from "../utils/socket"
 import { Message } from "../utils/types"
+import { encryptMessage, decryptMessage } from "../utils/encryption"
 
 interface ChatRoomProps {
   roomId: string
@@ -18,6 +19,7 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
   const [users, setUsers] = useState<Array<{ id: string; username: string }>>([
     { id: `${username}-${Date.now()}`, username },
   ])
+  const [roomKey, setRoomKey] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -28,27 +30,45 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
 
   // Join room & listen for events
   useEffect(() => {
+    // Check if we have a stored key for this room (for room creator)
+    const storedKey = sessionStorage.getItem(`room_${roomId}_key`)
+    if (storedKey) {
+      setRoomKey(storedKey)
+      sessionStorage.removeItem(`room_${roomId}_key`) // Clear it after use
+    }
+
     socket.emit("join_room", { roomId, username }, (response: any) => {
       if (response.success) {
-        setMessages(
-          response.messages.map((msg: any) => ({
-            id: msg.id.toString(),
-            text: msg.message,
-            username: msg.username,
-            timestamp: msg.timestamp,
-            isOwn: msg.userId === socket.id,
-            userId: msg.userId,
-          }))
-        )
-      } else alert(response.error || "Failed to join room")
+        // Store the encryption key if we don't already have it
+        if (!storedKey && response.roomKey) {
+          setRoomKey(response.roomKey)
+        }
+        // Decrypt and set messages using the appropriate key
+        const key = storedKey || response.roomKey
+        if (key) {
+          setMessages(
+            response.messages.map((msg: any) => ({
+              id: msg.id.toString(),
+              text: decryptMessage(msg.message, key),
+              username: msg.username,
+              timestamp: msg.timestamp,
+              isOwn: msg.userId === socket.id,
+              userId: msg.userId,
+            }))
+          )
+        }
+      } else {
+        alert(response.error || "Failed to join room")
+      }
     })
 
     socket.on("new_message", (msg: any) => {
+      if (!roomKey) return;
       setMessages((prev) => [
         ...prev,
         {
           id: msg.id.toString(),
-          text: msg.message,
+          text: decryptMessage(msg.message, roomKey),
           username: msg.username,
           timestamp: msg.timestamp,
           isOwn: msg.userId === socket.id,
@@ -99,13 +119,18 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
       socket.off("user_joined")
       socket.off("user_left")
     }
-  }, [roomId, username])
+  }, [roomId, username, roomKey])
 
   useEffect(scrollToBottom, [messages])
 
   const handleSendMessage = (text: string) => {
-    if (!text.trim()) return
-    socket.emit("send_message", { roomId, message: text, username })
+    if (!text.trim() || !roomKey) return;
+    const encryptedMessage = encryptMessage(text.trim(), roomKey);
+    socket.emit("send_message", { 
+      roomId, 
+      encryptedMessage, 
+      username 
+    });
   }
 
   const handleCopyRoomId = () => {
@@ -186,7 +211,7 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
                       <span className="text-lg">🔐</span>
                     </div>
                     <p className="text-xs sm:text-sm text-muted-foreground">
-                      No messages yet. Start the conversation.
+                      {roomKey ? "No messages yet. Start the conversation." : "Establishing secure connection..."}
                     </p>
                   </div>
                 </div>
