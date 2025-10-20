@@ -19,7 +19,9 @@ export default function LandingHero() {
   const createRoom = () => {
     if (!canCreate) return alert("Enter your name first!")
     socket.emit("create_room", (response: any) => {
-      if (response.success) {
+      if (response.success && response.roomKey) {
+        // Store the room key in session storage temporarily
+        sessionStorage.setItem(`room_${response.roomId}_key`, response.roomKey)
         router.push(`/room/${response.roomId}?username=${encodeURIComponent(username)}`)
       } else {
         alert("Failed to create room.")
