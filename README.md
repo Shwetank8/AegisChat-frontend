@@ -51,3 +51,6 @@ Environment Variable(.env): NEXT_PUBLIC_SOCKET_URL=http://localhost:5000
 npm install
 # or
 yarn install
+```
+
+## Backend for AegisChat- https://github.com/Shwetank8/AegisChat-backend
