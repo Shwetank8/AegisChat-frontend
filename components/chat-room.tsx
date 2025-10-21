@@ -4,10 +4,12 @@ import { useState, useRef, useEffect } from "react"
 import { Copy, LogOut, Menu, X } from "lucide-react"
 import Link from "next/link"
 import ChatMessage from "./chat-message"
+import FileMessage from "./file-message"
 import ChatInput from "./chat-input"
 import socket from "../utils/socket"
 import { Message } from "../utils/types"
 import { encryptMessage, decryptMessage } from "../utils/encryption"
+import { uploadFile, FileMetadata } from "../utils/fileUpload"
 
 interface ChatRoomProps {
   roomId: string
@@ -69,11 +71,13 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
         ...prev,
         {
           id: msg.id.toString(),
-          text: decryptMessage(msg.message, roomKey),
+          text: msg.type === 'text' ? decryptMessage(msg.message, roomKey) : '',
           username: msg.username,
           timestamp: msg.timestamp,
           isOwn: msg.userId === socket.id,
           userId: msg.userId,
+          type: msg.type || 'text',
+          fileData: msg.fileData
         },
       ])
     })
@@ -131,9 +135,30 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
     socket.emit("send_message", { 
       roomId, 
       encryptedMessage, 
-      username 
+      username,
+      type: 'text'
     });
   }
+
+  const handleFileUpload = async (file: File) => {
+    if (!roomKey) return;
+    try {
+      const { fileId } = await uploadFile(file, roomId);
+      // Notify other users about the file
+      socket.emit("file_message", {
+        roomId,
+        fileData: {
+          id: fileId,
+          filename: file.name,
+          mimetype: file.type
+        },
+        username
+      });
+    } catch (error) {
+      console.error('File upload error:', error);
+      throw error;
+    }
+  };
 
   const handleCopyRoomId = () => {
     navigator.clipboard.writeText(roomId)
@@ -219,8 +244,21 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
                 </div>
               ) : (
                 <div className="space-y-3 sm:space-y-4">
-                  {messages.map((msg) => (
-                    <ChatMessage key={msg.id} message={msg} />
+                  {messages.map((msg, index) => (
+                    msg.type === 'file' && msg.fileData ? (
+                      <FileMessage
+                        key={`${msg.id}-${msg.timestamp}-${index}-file`}
+                        file={msg.fileData}
+                        roomId={roomId}
+                        isOwn={msg.isOwn}
+                        username={msg.username}
+                      />
+                    ) : (
+                      <ChatMessage 
+                        key={`${msg.id}-${msg.timestamp}-${index}-msg`} 
+                        message={msg} 
+                      />
+                    )
                   ))}
                   <div ref={messagesEndRef} />
                 </div>
@@ -228,7 +266,11 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
             </div>
 
             <div className="border-t border-[color:var(--color-brand)]/10 bg-background/80 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4">
-              <ChatInput onSendMessage={handleSendMessage} />
+              <ChatInput 
+                onSendMessage={handleSendMessage}
+                onFileUpload={handleFileUpload}
+                roomId={roomId}
+              />
             </div>
           </div>
         </div>
