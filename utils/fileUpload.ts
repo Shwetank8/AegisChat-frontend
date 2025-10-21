@@ -5,28 +5,57 @@ export interface FileMetadata {
   timestamp: string;
 }
 
+// export const uploadFile = async (
+//   file: File,
+//   roomId: string,
+//   baseUrl: string = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000'
+// ): Promise<{ fileId: number }> => {
+//   const formData = new FormData();
+//   formData.append('file', file);
+//   formData.append('roomId', roomId);
+
+//   const response = await fetch(`${baseUrl}/upload`, {
+//     method: 'POST',
+//     body: formData,
+//     credentials: 'include',
+//   });
+
+//   if (!response.ok) {
+//     const error = await response.json();
+//     throw new Error(error.message || 'Upload failed');
+//   }
+
+//   return response.json();
+// };
+
+// utils/fileUpload.ts
 export const uploadFile = async (
   file: File,
-  roomId: string,
-  baseUrl: string = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000'
+  roomId: string
 ): Promise<{ fileId: number }> => {
   const formData = new FormData();
-  formData.append('file', file);
-  formData.append('roomId', roomId);
+  formData.append("file", file);
+  formData.append("roomId", roomId);
+
+  // Use the backend URL directly from env
+  const baseUrl = process.env.NEXT_PUBLIC_SOCKET_URL!;
+  // Example: "https://aegischat-backend-production.up.railway.app"
 
   const response = await fetch(`${baseUrl}/upload`, {
-    method: 'POST',
+    method: "POST",
     body: formData,
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Upload failed');
+    const text = await response.text();
+    throw new Error(`Upload failed: ${response.status} - ${text}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  return data;
 };
+
 
 export const downloadFile = async (
   roomId: string,
