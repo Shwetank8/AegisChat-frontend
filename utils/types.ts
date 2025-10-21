@@ -6,4 +6,11 @@ export interface Message {
   timestamp: string
   isOwn: boolean
   userId: string
+  type?: 'text' | 'file'
+  fileData?: {
+    id: number
+    filename: string
+    mimetype: string
+    timestamp: string
+  }
 }
