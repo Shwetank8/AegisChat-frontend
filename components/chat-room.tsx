@@ -15,6 +15,7 @@ interface ChatRoomProps {
 }
 
 export default function ChatRoom({ roomId, username }: ChatRoomProps) {
+  
   const [messages, setMessages] = useState<Message[]>([])
   const [users, setUsers] = useState<Array<{ id: string; username: string }>>([
     { id: `${username}-${Date.now()}`, username },
@@ -123,6 +124,7 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
 
   useEffect(scrollToBottom, [messages])
 
+  // encrypt and send message
   const handleSendMessage = (text: string) => {
     if (!text.trim() || !roomKey) return;
     const encryptedMessage = encryptMessage(text.trim(), roomKey);
