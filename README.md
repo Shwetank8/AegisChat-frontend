@@ -1,30 +1,31 @@
-# 🔐 AegisChat — Frontend
+# 💬 AegisChat — Encrypted Real-Time Chat (Frontend)
 
-AegisChat is a **real-time, end-to-end encrypted chat application** built with **Next.js 14**, **Socket.IO**, and **Tailwind CSS**.  
-It features dynamic chat rooms, instant messaging, and a responsive UI that adapts seamlessly across all devices.
-
----
-
-## 🚀 Tech Stack
-
-- **Next.js 14 (App Router)**
-- **React 18**
-- **Socket.IO Client**
-- **Tailwind CSS**
-- **TypeScript**
-- **Lucide Icons**
-- **Framer Motion (for subtle animations)**
+A sleek, secure, and real-time chat frontend built with **Next.js** and **Socket.IO Client**, designed to work with the **Node.js + Express + Socket.IO backend**.  
+This app allows users to create and join private chat rooms, exchange **end-to-end encrypted messages**, and experience instant communication — all within a modern, responsive UI.
 
 ---
 
-## Features
+## 🚀 Features
 
-- 💬 Real-time chat powered by Socket.IO
-- ⚡ Smooth, responsive UI for mobile & desktop
-- 🧠 Persistent room sessions
-- 📋 Copyable Room ID*
-- 🎨 Elegant UI with Tailwind and Lucide icons
-- 🔄 Automatic scroll to latest message
+- 🔒 **End-to-End Encryption (E2EE)** using AES via `crypto-js`
+- ⚡ Real-time chat powered by **Socket.IO**
+- 🏠 Create or join private chat rooms with unique IDs
+- 💬 Persistent encrypted message history (stored in backend memory)
+- 🧑‍💻 Simple and clean UI with React Hooks
+- 📱 Fully **responsive** and mobile-friendly layout
+- 🔁 Reconnects automatically if disconnected
+
+---
+
+## 🧩 Tech Stack
+
+| Technology | Purpose |
+|-------------|----------|
+| **Next.js 14+** | React-based frontend framework |
+| **Socket.IO Client** | Real-time communication |
+| **CryptoJS** | Encryption & decryption of messages |
+| **Tailwind CSS** | Modern, utility-first styling |
+| **Lucide React** | Icon set for UI components |
 
 ---
 
