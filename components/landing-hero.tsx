@@ -37,7 +37,7 @@ export default function LandingHero() {
   }
 
   return (
-    <section className="flex min-h-screen flex-col items-center justify-center px-6">
+    <section className="flex flex-col items-center justify-center px-6">
       <div className="text-center space-y-6 w-full max-w-4xl">
         <span className="inline-block rounded-full border border-[color:var(--color-brand)]/30 px-3 py-1 text-xs tracking-wider text-[color:var(--color-brand)]">
           AegisChat

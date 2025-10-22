@@ -62,7 +62,7 @@ export default function ChatInput({ onSendMessage, onFileUpload, roomId }: ChatI
 
   return (
     <div
-      className={`flex items-end gap-3 rounded-lg border transition-all ${
+      className={`flex items-center justify-between flex-row gap-3 rounded-lg border transition-all ${
         isFocused
           ? "border-[color:var(--color-brand)]/40 bg-background/50 shadow-[0_0_20px_var(--color-brand)]/10"
           : "border-[color:var(--color-brand)]/10 bg-background/30"
@@ -78,7 +78,7 @@ export default function ChatInput({ onSendMessage, onFileUpload, roomId }: ChatI
       <button
         onClick={() => fileInputRef.current?.click()}
         disabled={isUploading}
-        className="mb-3 ml-3 inline-flex items-center justify-center rounded-lg bg-[color:var(--color-brand)]/20 p-2 transition-all hover:bg-[color:var(--color-brand)]/30 disabled:opacity-50"
+        className="mb-3 ml-3 mt-3 inline-flex items-center justify-center rounded-lg bg-[color:var(--color-brand)]/20 p-2 transition-all hover:bg-[color:var(--color-brand)]/30 disabled:opacity-50"
         aria-label="Attach file"
       >
         <Paperclip className="h-4 w-4 text-[color:var(--color-brand)]" />
@@ -97,7 +97,7 @@ export default function ChatInput({ onSendMessage, onFileUpload, roomId }: ChatI
       <button
         onClick={handleSend}
         disabled={!input.trim() || isUploading}
-        className="mb-3 mr-3 inline-flex items-center justify-center rounded-lg bg-[color:var(--color-brand)]/20 p-2 transition-all hover:bg-[color:var(--color-brand)]/30 disabled:opacity-50 disabled:hover:bg-[color:var(--color-brand)]/20"
+        className="mb-3 mr-3 mt-3 inline-flex items-center justify-center rounded-lg bg-[color:var(--color-brand)]/20 p-2 transition-all hover:bg-[color:var(--color-brand)]/30 disabled:opacity-50 disabled:hover:bg-[color:var(--color-brand)]/20"
         aria-label="Send message"
       >
         <Send className="h-4 w-4 text-[color:var(--color-brand)]" />

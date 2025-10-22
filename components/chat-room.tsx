@@ -187,7 +187,7 @@ export default function ChatRoom({ roomId, username }: ChatRoomProps) {
         <div className="flex flex-1 overflow-hidden relative">
           {/* Sidebar (mobile overlay + desktop static) */}
           <aside
-            className={`absolute md:static z-20 w-64 md:w-48 bg-background/95 backdrop-blur-sm border-r border-[color:var(--color-brand)]/10 transform transition-transform duration-300 ${
+            className={`absolute md:static z-20 w-full md:w-48 bg-background/95 backdrop-blur-sm border-r border-[color:var(--color-brand)]/10 transform transition-transform duration-300 ${
               sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
             } flex flex-col`}
           >
